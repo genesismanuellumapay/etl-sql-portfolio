@@ -4,7 +4,7 @@
 Third-party vendor data is inherently dirty, missing critical fields, or violating business data types. This robust ETL pipeline ensures that invalid product catalogs do not break or pollute downstream analytics warehouses. It isolates corrupt rows into a dedicated quarantine/error log table for data-steward inspection while smoothly passing clean, verified records into the production dimensional schema.
 
 ## Pipeline Architecture
-![Main Mapping Canvas](screenshots/main_mapping.png)
+![Main Mapping Canvas]<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
 
 ### Key Design Patterns Used:
 * **Unconnected Lookup Module:** Leveraged an independent unconnected lookup (`U_Lookup`) called inline via expression to reduce mapping canvas footprint and avoid unnecessary full-outer pipelines.
