@@ -18,7 +18,7 @@ This repository contains hands-on projects involving:
 
 ## Technologies Used
 
-- PostgreSQL (Neon Console)
+- PostgreSQL
 - Informatica Intelligent Cloud Services (IICS)
 - SQL
 - GitHub
