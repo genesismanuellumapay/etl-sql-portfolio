@@ -33,7 +33,7 @@ Within `exp_01`, rows are evaluated against business rules to generate binary va
 * **Price Check:** `IIF(IS_NUMBER(unit_price) AND TO_DECIMAL(unit_price) > 0, 1, 0)`
 * **Category Match:** Returns `1` if the Unconnected Lookup finds a matching record, otherwise `0`.
 
-<img src="screenshots/expression_validations.png" alt="Expression Setup" width="100%">
+<img src="https://raw.githubusercontent.com/genesismanuellumapay/etl-sql-portfolio/main/03_IICS_Projects/05_Vendor_Data_Quarantine_Pipeline_%28Data%20Quality%29/screenshots/expression_validations.png" alt="Expression Setup" width="100%">
 
 #### 2. Advanced Multi-Error Logging (Decode Matrix)
 Inside `exp_02`, rather than utilizing nested `IIF` statements which only capture the first failing rule, a variable string matrix (`val_missing_values`) concatenates the result flags. An optimized `DECODE` expression evaluates this composite key to report exact, complex error combinations.
