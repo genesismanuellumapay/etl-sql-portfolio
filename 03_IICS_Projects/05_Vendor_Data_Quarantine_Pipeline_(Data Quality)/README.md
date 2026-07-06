@@ -60,7 +60,7 @@ Using the explicit output flags built in the primary validation block, a Router 
 ### 1. IICS Monitor Task Log
 When executed with an intentionally flawed 6-row sample file containing missing fields, negative pricing strings, and unmapped category references, the pipeline split perfectly: **3 clean records successfully targeted, 3 bad records quarantined.**
 
-<img src="screenshots/session_monitor.png" alt="IICS Session Monitor" width="100%">
+<img src="https://raw.githubusercontent.com/genesismanuellumapay/etl-sql-portfolio/main/03_IICS_Projects/05_Vendor_Data_Quarantine_Pipeline_%28Data%20Quality%29/screenshots/session_monitor.png" alt="IICS Session Monitor" width="100%">
 
 ### 2. Database Target Verification
 Running structural verification audits against the target PostgreSQL database confirms data integrity rules are intact, and surrogate keys have incremented properly.
