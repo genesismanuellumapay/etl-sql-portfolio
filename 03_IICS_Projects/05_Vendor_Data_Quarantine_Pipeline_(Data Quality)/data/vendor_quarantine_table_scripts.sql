@@ -4,6 +4,7 @@ CREATE TABLE ref_category (
     category_name VARCHAR(50) NOT NULL
 );
 
+--sample data for ref_category table
 INSERT INTO ref_category (category_code, category_name) VALUES
 ('ELEC', 'Electronics'),
 ('FURN', 'Furniture'),
