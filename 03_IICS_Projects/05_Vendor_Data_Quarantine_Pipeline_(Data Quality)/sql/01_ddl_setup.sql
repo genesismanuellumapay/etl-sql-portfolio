@@ -1,15 +1,22 @@
---Lookup Reference table
+--01_DDL_SETUP.SQL
+
+DROP TABLE IF EXISTS err_vendor_products;
+DROP TABLE IF EXISTS dim_product;
+DROP TABLE IF EXISTS ref_category;
+
+--Create Reference Lookup Table
 CREATE TABLE ref_category (
     category_code VARCHAR(10) PRIMARY KEY,
     category_name VARCHAR(50) NOT NULL
 );
 
+-- Insert Reference Data
 INSERT INTO ref_category (category_code, category_name) VALUES
 ('ELEC', 'Electronics'),
 ('FURN', 'Furniture'),
 ('OFFC', 'Office Supplies');
 
---Target table
+--Create Production Target Table
 CREATE TABLE dim_product (
     product_sk SERIAL PRIMARY KEY,
     vendor_sku VARCHAR(50) NOT NULL,
@@ -20,7 +27,7 @@ CREATE TABLE dim_product (
     load_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
---Quarantine table
+--Create Quarantine/Error Log Table
 CREATE TABLE err_vendor_products (
     error_id SERIAL PRIMARY KEY,
     vendor_sku VARCHAR(50),
@@ -28,4 +35,3 @@ CREATE TABLE err_vendor_products (
     error_reason VARCHAR(255),
     error_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
