@@ -4,7 +4,7 @@
 Third-party vendor data is inherently dirty, missing critical fields, or violating business data types. This robust ETL pipeline ensures that invalid product catalogs do not break or pollute downstream analytics warehouses. It isolates corrupt rows into a dedicated quarantine/error log table for data-steward inspection while smoothly passing clean, verified records into the production dimensional schema.
 
 ## Pipeline Architecture
-![Main Mapping Canvas]<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
+<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
 
 ### Key Design Patterns Used:
 * **Unconnected Lookup Module:** Leveraged an independent unconnected lookup (`U_Lookup`) called inline via expression to reduce mapping canvas footprint and avoid unnecessary full-outer pipelines.
@@ -19,7 +19,7 @@ Third-party vendor data is inherently dirty, missing critical fields, or violati
 
 The pipeline utilizes an unconnected lookup (`U_Lookup`) against `ref_category` to dynamically validate incoming vendor `category_code` fields. If an incoming category code is missing or not present in the reference master table, it safely flags the row downstream.
 
-![Lookup Config](screenshots/lookup_config.png)
+<img src="screenshots/lookup_config.png" alt="Lookup Config" width="100%">
 </details>
 
 <details>
@@ -33,14 +33,14 @@ Within `exp_01`, rows are evaluated against business rules to generate binary va
 * **Price Check:** `IIF(IS_NUMBER(unit_price) AND TO_DECIMAL(unit_price) > 0, 1, 0)`
 * **Category Match:** Returns `1` if the Unconnected Lookup finds a matching record, otherwise `0`.
 
-![Expression Setup](screenshots/expression_validations.png)
+<img src="screenshots/expression_validations.png" alt="Expression Setup" width="100%">
 
 #### 2. Advanced Multi-Error Logging (Decode Matrix)
 Inside `exp_02`, rather than utilizing nested `IIF` statements which only capture the first failing rule, a variable string matrix (`val_missing_values`) concatenates the result flags. An optimized `DECODE` expression evaluates this composite key to report exact, complex error combinations.
 
 Furthermore, a raw data block (`raw_record_data_value`) dynamically strings the failed fields together with a pipe-delimiter (`|`) to preserve the historical footprint for troubleshooting.
 
-![Error Matrix Decode and String Concatenation](screenshots/error_matrix_decode.png)
+<img src="screenshots/error_matrix_decode.png" alt="Error Matrix Decode and String Concatenation" width="100%">
 </details>
 
 <details>
@@ -50,7 +50,7 @@ Using the explicit output flags built in the primary validation block, a Router 
 * **Valid_Records:** `o_is_valid_price = 1 AND category_check = 1 AND check_sku = 1`
 * **DEFAULT Branch (Invalid_Records):** Automatically catches any records failing one or more rules and streams them directly into the error handling matrix, eliminating redundant logic chains.
 
-![Router Condition Window](screenshots/router_logic.png)
+<img src="screenshots/router_logic.png" alt="Router Condition Window" width="100%">
 </details>
 
 ---
@@ -60,9 +60,9 @@ Using the explicit output flags built in the primary validation block, a Router 
 ### 1. IICS Monitor Task Log
 When executed with an intentionally flawed 6-row sample file containing missing fields, negative pricing strings, and unmapped category references, the pipeline split perfectly: **3 clean records successfully targeted, 3 bad records quarantined.**
 
-![IICS Session Monitor](screenshots/session_monitor.png)
+<img src="screenshots/session_monitor.png" alt="IICS Session Monitor" width="100%">
 
 ### 2. Database Target Verification
 Running structural verification audits against the target PostgreSQL database confirms data integrity rules are intact, and surrogate keys have incremented properly.
 
-![Database Verification View](screenshots/database_records.png)
+<img src="screenshots/database_records.png" alt="Database Verification View" width="100%">
