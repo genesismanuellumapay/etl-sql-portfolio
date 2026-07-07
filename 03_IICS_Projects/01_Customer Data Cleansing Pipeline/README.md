@@ -42,6 +42,7 @@ The filter evaluates the email string using an inline function to ensure an @ sy
   ```sql
   INSTR(email, '@') > 0
   ```
+</details>
 ---
 
 ## Post-ETL Verification & Execution Metrics
