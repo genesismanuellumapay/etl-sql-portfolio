@@ -40,7 +40,10 @@ The filter evaluates the email string using an inline function to ensure an @ sy
   ```sql
   INSTR(email, '@') > 0
 
+---
+
 ## Post-ETL Verification & Execution Metrics
+
 #### 1. IICS Monitor Task Log
 When executed with the sample dataset containing inconsistent casing and a structurally malformed email, the pipeline executed with a 100% Success Status. Out of 3 source rows read, 2 clean records successfully updated the target database, while 1 corrupt row was cleanly isolated and dropped.
 <img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
