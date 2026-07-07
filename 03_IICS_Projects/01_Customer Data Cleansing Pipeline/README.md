@@ -21,6 +21,8 @@ This project implements an automated cloud data pipeline using **Informatica Int
 
 The core formatting engine leverages an Expression transformation (`exp_1`) to evaluate incoming constraints, clean string data, and enforce proper database type-casting.
 
+<img src="screenshots/cleansing_expression.png" alt="Expression" width="100%">
+
 #### 1. Standardization Logic Configuration
 Within `exp_1`, raw incoming fields are standardized using the following programmatic expressions:
 * **Full Name Generation:** Concatenates first and last names while forcing proper title casing to correct messy inputs (e.g., `john` or `MARY`).
@@ -46,10 +48,11 @@ The filter evaluates the email string using an inline function to ensure an @ sy
 
 #### 1. IICS Monitor Task Log
 When executed with the sample dataset containing inconsistent casing and a structurally malformed email, the pipeline executed with a 100% Success Status. Out of 3 source rows read, 2 clean records successfully updated the target database, while 1 corrupt row was cleanly isolated and dropped.
-<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
+<img src="screenshots/job_result.png" alt="Job Properties" width="100%">
 
 #### 2. Database Target Verification
 Running an audit query against the target database table confirms that formatting rules applied perfectly: names are merged and title-cased, states/cities are successfully uppercased, string dates are converted to native dates, and the invalid email record was entirely blocked from polluting production.
   ```sql
   SELECT * FROM customer_clean;
-<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
+  ```
+<img src="screenshots/query_result.png" alt="Query Result" width="100%">
