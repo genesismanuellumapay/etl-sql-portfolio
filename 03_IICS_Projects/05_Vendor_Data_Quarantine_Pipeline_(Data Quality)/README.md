@@ -1,4 +1,4 @@
-# Project 1: Vendor Data Quarantine Pipeline (IICS & PostgreSQL)
+# Project 5: Vendor Data Quarantine Pipeline (IICS & PostgreSQL)
 
 ## Business Case
 Third-party vendor data is inherently dirty, missing critical fields, or violating business data types. This robust ETL pipeline ensures that invalid product catalogs do not break or pollute downstream analytics warehouses. It isolates corrupt rows into a dedicated quarantine/error log table for data-steward inspection while smoothly passing clean, verified records into the production dimensional schema.
