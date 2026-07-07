@@ -26,3 +26,27 @@ Within `exp_1`, raw incoming fields are standardized using the following program
 * **Full Name Generation:** Concatenates first and last names while forcing proper title casing to correct messy inputs (e.g., `john` or `MARY`).
   ```sql
   INITCAP(first_name) || ' ' || INITCAP(last_name)
+
+* **State & City Capitalization:** Forces regional state/city values to absolute uppercase to ensure uniform reporting entries for downstream BI tools.
+  ```sql
+  UPPER(state)
+
+* **Date Type-Casting & Schema Alignment: ** Because flat CSV source files default all incoming metadata to generic string/varchar data types within IICS, explicit data type coercion was required. This logic programmatically transforms the raw date strings into native database-compliant DATE objects, ensuring strict target schema alignment and preventing structural write failures.
+  ```sql
+  TO_DATE(registration_date, 'YYYY-MM-DD')
+
+#### 2. Filter Condition Configuration
+The filter evaluates the email string using an inline function to ensure an @ symbol is present. Any record missing this mandatory anchor (such as row 3's invalidemail) returns a value of 0 and is safely dropped from the pipeline stream.
+  ```sql
+  INSTR(email, '@') > 0
+
+## Post-ETL Verification & Execution Metrics
+#### 1. IICS Monitor Task Log
+When executed with the sample dataset containing inconsistent casing and a structurally malformed email, the pipeline executed with a 100% Success Status. Out of 3 source rows read, 2 clean records successfully updated the target database, while 1 corrupt row was cleanly isolated and dropped.
+<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
+
+#### 2. Database Target Verification
+Running an audit query against the target database table confirms that formatting rules applied perfectly: names are merged and title-cased, states/cities are successfully uppercased, string dates are converted to native dates, and the invalid email record was entirely blocked from polluting production.
+  ```sql
+  SELECT * FROM customer_clean;
+<img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
