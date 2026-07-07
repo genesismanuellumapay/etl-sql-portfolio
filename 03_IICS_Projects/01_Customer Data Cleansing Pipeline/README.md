@@ -39,7 +39,7 @@ Within `exp_1`, raw incoming fields are standardized using the following program
 The filter evaluates the email string using an inline function to ensure an @ symbol is present. Any record missing this mandatory anchor (such as row 3's invalidemail) returns a value of 0 and is safely dropped from the pipeline stream.
   ```sql
   INSTR(email, '@') > 0
-
+  ```
 ---
 
 ## Post-ETL Verification & Execution Metrics
