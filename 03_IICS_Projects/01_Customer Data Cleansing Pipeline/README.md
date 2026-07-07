@@ -1,4 +1,4 @@
-# Project 2: Customer Data Cleansing & Standardization Pipeline (IICS)
+# Project 1: Customer Data Cleansing & Standardization Pipeline (IICS)
 
 ## Business Case
 In real-world enterprise environments, marketing teams frequently capture raw customer data from decentralized web forms, landing pages, and third-party platforms. This raw data is notoriously "dirty"—plagued by inconsistent casing, missing fields, and malformed email syntaxes. 
