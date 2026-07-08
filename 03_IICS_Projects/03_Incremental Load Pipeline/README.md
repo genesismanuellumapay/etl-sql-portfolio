@@ -3,7 +3,7 @@
 ## Business Scenario & Objective
 In a production environment, performing a "Full Load" (truncating and reloading millions of records every day) is computationally expensive and highly inefficient. 
 
-The objective of this project is to build an **Incremental Load (Delta) Pipeline** using a High-Water Mark (HWM) architecture. The pipeline queries an `etl_control` table to find the last successfully processed `order_id`, extracts only the *new* records that arrived after that ID, loads them into the target warehouse, and safely updates the control table with the new maximum ID.
+The objective of this project is to build an **Incremental Load (Delta) Pipeline** using a High-Water Mark (HWM) architecture. The pipeline queries an `etl_control` table to find the last successfully processed `order_id`, extracts only the *new* records that arrived after that ID, loads them into the target PostgreSQL database, and safely updates the control table with the new maximum ID.
 
 ---
 
@@ -30,29 +30,9 @@ The workflow leverages a dual-target stream. The primary stream filters and inse
 
 ---
 
-## Database Setup & Metadata Control
+## Metadata Control
 
-### 1. Source and Target Tables
-```sql
--- Source Table (Simulating continuous operational data)
-CREATE TABLE orders (
-    order_id     SERIAL PRIMARY KEY,
-    customer_id  INT,
-    order_date   DATE,
-    amount       NUMERIC(10,2)
-);
-
--- Target Table (The Data Warehouse layer)
-CREATE TABLE incremental_orders (
-    order_id     INT PRIMARY KEY,
-    customer_id  INT,
-    order_date   DATE,
-    amount       NUMERIC(10,2),
-    load_date    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### 2. ETL Control Table (High-Water Mark)
+### 1. ETL Control Table (High-Water Mark)
 ```sql
 -- Metadata table to track pipeline execution state
 CREATE TABLE etl_control (
@@ -61,7 +41,7 @@ CREATE TABLE etl_control (
     last_run_timestamp   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Seed initial state (Assuming records 1-5 were loaded yesterday)
+-- Insert initial state (Assuming records 1-5 were loaded yesterday)
 INSERT INTO etl_control (table_name, last_loaded_order_id) 
 VALUES ('orders', 5);
 ```
