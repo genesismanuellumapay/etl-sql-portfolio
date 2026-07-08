@@ -32,8 +32,8 @@ Within `exp_1`, raw incoming fields are standardized using the following program
 * **State & City Capitalization:** Forces regional state/city values to absolute uppercase to ensure uniform reporting entries for downstream BI tools.
   ```sql
   UPPER(state)
-
-* **Date Type-Casting & Schema Alignment: ** Because flat CSV source files default all incoming metadata to generic string/varchar data types within IICS, explicit data type coercion was required. This logic programmatically transforms the raw date strings into native database-compliant DATE objects, ensuring strict target schema alignment and preventing structural write failures.
+  
+* **Date Type-Casting & Schema Alignment:** Because flat CSV source files default all incoming metadata to generic string/varchar data types within IICS, explicit data type coercion was required. This logic programmatically transforms the raw date strings into native database-compliant DATE objects, ensuring strict target schema alignment and preventing structural write failures.
   ```sql
   TO_DATE(registration_date, 'YYYY-MM-DD')
 
