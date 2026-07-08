@@ -9,7 +9,7 @@ The objective of this project is to build an end-to-end data integration pipelin
 
 ## Pipeline Architecture
 
-The workflow follows a standard enterprise data integration pattern, joining data at granular transaction layers before executing performance-optimized database aggregations.
+The workflow follows a standard enterprise data integration pattern, joining data at granular transaction layers before executing aggregations.
 
     [Source: contacts] ───┐
                           ├─── [Joiner] ───► [Expression] ───► [Aggregator] ───► [Target: monthly_customer_sales]
@@ -66,7 +66,7 @@ Once triggered, the Cloud Secure Agent executed the aggregation matrices, report
 <img src="screenshots/05_session_monitor.png" alt="IICS Job Monitor Success Status" width="100%">
 
 ### Database Validation Query
-To audit target storage integrity, the following data warehouse query was executed against the PostgreSQL environment:
+To verify the final output, the following SQL query was executed against the target PostgreSQL database:
 
 ```sql
 SELECT 
