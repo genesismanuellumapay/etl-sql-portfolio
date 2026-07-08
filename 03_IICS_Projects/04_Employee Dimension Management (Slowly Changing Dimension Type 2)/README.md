@@ -1,39 +1,39 @@
 # Project 4: Employee Dimension Management (SCD Type 2 Ingestion)
 
 ## Business Scenario & Objective
-A company's human resources and organizational structure data is highly dynamic. When an employee transitions to a new department, gets a promotion, or receives a compensation adjustment, analytics teams must be able to report on both their current assignment *and* their historical associations for accurate point-in-time revenue and performance analysis.
+A company's human resources and organizational structure data is highly dynamic. When an employee transitions to a new department, gets a promotion, or receives a compensation adjustment, analytics teams must be able to report on both their current assignment *and* their historical associations for accurate point-in-time performance analysis.
 
-The objective of this project is to implement an enterprise-grade **Slowly Changing Dimension Type 2 (SCD Type 2)** data pipeline inside **Informatica Intelligent Cloud Services (IICS)**. This ensures that historical changes are preserved as distinct rows with chronological tracking metadata, rather than overwriting existing records.
+The objective of this project is to implement a **Slowly Changing Dimension Type 2 (SCD Type 2)** data pipeline inside **Informatica Intelligent Cloud Services (IICS)**. This ensures that historical profile changes are preserved as distinct rows with chronological tracking metadata, rather than overwriting existing database records.
 
 ---
 
 ## Pipeline Architecture
+This pipeline utilizes a parallel split-stream target design pattern. It evaluates data variations directly inside a routing transformation and segregates execution tasks into multiple synchronized target objects targeting the same destination table.
 
-The workflow implements a pattern that queries the data warehouse target reactively, evaluates modifications inside an expression engine, and segregates operations through specialized transactional targets.
-
-    [Source: employee_source] ──► [Lookup: dim_employee (Active Rows Only)] 
-                                           │
-    ┌──────────────────────────────────────┘
-    ▼
-    [Expression: SCD Logic Check] ──► [Router: Segment Operation Groups]
-                                           ├──► [GRP_NEW_INSERTS] ──────────────────────────► [Target: dim_employee (Insert)]
-                                           └──► [GRP_CHANGED_RECORDS] ─┬──► [Update Strat] ─► [Target: dim_employee (Expire Old)]
-                                                                       └──► [Expression] ───► [Target: dim_employee (Insert New)]
+```text
+                        ┌──► [Group: INSERT_NEW] ──► [Expression: exp_02] ──► [Target2] (Insert Brand New)
+                        │
+[Source] ──► [Lookup] ──┤
+                        │
+                        └──► [Group: UPSERT]     ┬──► [Expression: exp_03] ──► [Target]  (Update Expire Old)
+                                                 │
+                                                 └──► [Expression: exp_4]  ──► [Target3] (Insert New Values)
+```
 
 ### Visual Mapping Overview
-<img src="screenshots/01_mapping_canvas.png" alt="IICS Complete SCD2 Mapping Canvas" width="100%">
+<img src="image_0dec04.png" alt="IICS Complete SCD2 Mapping Canvas" width="100%">
 
 ---
 
 ## SCD Type 2 Ingestion Rule Matrix
 
-The logic engine routes data streams based on three absolute transactional boundary rules:
+The routing engine splits incoming records into parallel target lines based on clear database evaluation conditions:
 
 | Evaluation Condition | Business State | Pipeline Execution Actions |
 | :--- | :--- | :--- |
-| **Lookup ID is Null** | New Hire / System Entry | Direct Insert: `current_flag = 'Y'`, `effective_date = TODAY`, `end_date = NULL` |
-| **Lookup ID Matches & Fields Match** | No Operational Change | **Record Ignored:** Pipeline drops row quietly to optimize network throughput |
-| **Lookup ID Matches & Fields Differ** | Structural HR Mutation | **Dual-Action Branch Execution:**<br>1. Expire existing row (`current_flag = 'N'`, `end_date = TODAY - 1`) via `DD_UPDATE`<br>2. Insert new version (`current_flag = 'Y'`, `effective_date = TODAY`, `end_date = NULL`) via `DD_INSERT` |
+| **Lookup ID is Null** | New Hire / System Entry | **Insert Stream:** Routes via group `INSERT_NEW` into `exp_02`. Sets active metadata and pushes directly to `Target2` for a database **Insert** operation. |
+| **Lookup ID Matches & Fields Match** | No Operational Change | **Record Ignored:** Pipeline passes row to default categories or drops it quietly to optimize network throughput. |
+| **Lookup ID Matches & Fields Differ** | Structural Profile Shift | **Dual-Action Parallel Stream Execution:**<br>1. **Expire Path:** Routes via group `UPSERT` into `exp_03` to flag historical row expiration. Pushes to `Target` for a database **Update** operation.<br>2. **New Active Path:** Routes via group `UPSERT` into `exp_4` to configure the new active dataset. Pushes to `Target3` for a database **Insert** operation. |
 
 ---
 
@@ -53,7 +53,7 @@ CREATE TABLE employee_source (
 
 -- 2. Target Historical Analytical Dimension Table
 CREATE TABLE dim_employee (
-    surrogate_key  SERIAL PRIMARY KEY, -- Auto-incrementing warehouse identity key
+    surrogate_key  SERIAL PRIMARY KEY, -- Auto-incrementing identity key
     employee_id    INT,                -- Operational business key
     full_name      VARCHAR(100),
     department     VARCHAR(50),
@@ -69,42 +69,62 @@ CREATE TABLE dim_employee (
 
 ## Transformation Component Configurations
 
-### 1. Target Tracking Lookup (`LKP_dim_employee`)
+### 1. Target Tracking Lookup (`Lookup`)
 * **Lookup Object:** `dim_employee`
-* **Join Condition:** `employee_source.employee_id = dim_employee.employee_id`
-* **Advanced Data Filter Override:** `dim_employee.current_flag = 'Y'`
-> 💡 **Developer Note:** This pipeline explicitly utilizes the **Lookup Data Filter** under IICS Advanced Properties. Defending against the "Multiple-Change Lookup Trap," this filter forces the transformation cache to only ingest active warehouse records. This guarantees that historical matches evaluate against an employee's *most recent active state*, preventing accidental mismatches against stale, expired historical rows.
+* **Join Condition:** `employee_id = employee_id_src`
+* **Advanced Data Filter Override:** `current_flag = 'Y'`
 
-### 2. Expression Logical Engine (`EXP_scd2_logic`)
-Derives structural audit elements and computes conditional boolean flags before streaming data to the transaction router.
-* **`out_full_name`:** `first_name || ' ' || last_name`
-* **`v_is_new`:** `ISNULL(lkp_surrogate_key)`
-* **`v_is_changed`:** `NOT ISNULL(lkp_surrogate_key) AND (src_department != lkp_department OR src_job_title != lkp_job_title OR src_salary != lkp_salary)`
+> 💡 **Developer Note:** By utilizing an Advanced Lookup Data Filter, the transformation cache only ingests active target records. This protects the pipeline from the "Multiple-Change Lookup Trap," ensuring arriving data evaluates solely against an employee's *most recent active profile* rather than matching older, expired historical rows.
 
-<img src="screenshots/02_expression_logic.png" alt="Expression Logic Configuration" width="100%">
+<img src="image_dc206b.png" alt="Lookup Configuration" width="100%">
+<img src="image_dc208a.png" alt="Lookup Advanced Filter" width="100%">
 
-### 3. Stream Routing Engine (`RTR_scd2_routing`)
-* **Group 1 (New Hire Path):** `v_is_new`
-* **Group 2 (Change Expire/Insert Path):** `v_is_changed`
+### 2. Stream Routing Engine (`rtr_01`)
+Segregates data paths based on the presence of the business key and potential metadata transformations:
+* **Group `INSERT_NEW` Condition:** `ISNULL(employee_id)`
+* **Group `UPSERT` Condition:** `employee_id = employee_id_src AND (department != department_src OR job_title != job_title_src OR salary != salary_src)`
 
-<img src="screenshots/03_router_conditions.png" alt="Router Data Stream Segregation" width="100%">
+<img src="image_dc20c1.png" alt="Router Configuration" width="100%">
 
-### 4. Update Strategy Execution (`UPD_expire_old_record`)
-* **Target Stream:** Pointed at the historical tracking target line.
-* **Expression Action:** `DD_UPDATE`
-* **Port Mutations:** Maps `current_flag = 'N'` and `end_date = SYSDATE - 1` directly to the matching target record to terminate its active analytical window.
+### 3. Parallel Expression Transformation Blocks
+Rather than using generic script commands, structural metadata changes and formatting calculations are cleanly isolated inside independent, parallel expression engines:
 
-<img src="screenshots/04_update_strategy.png" alt="Update Strategy Properties Configuration" width="100%">
+* **`exp_02` (New Records Branch):** Configures tracking flags for brand new system arrivals before passing the records to `Target2`.
+  * `current_flag_val` = `'Y'`
+  * `effective_date_value` = `SYSDATE`
+  * `full_name_value` = `first_name_src||' '||last_name_src`
+
+<img src="image_dc20e2.png" alt="Expression 02 Configuration" width="100%">
+
+* **`exp_03` (Historical Expiration Branch):** Captures changed records from the `UPSERT` stream and updates tracking parameters to close out their active reporting window before passing them to `Target`.
+  * `current_flag_val` = `'N'`
+  * `end_date_value` = `ADD_TO_DATE(SYSDATE, 'DD', -1)`
+  * `full_name_value` = `first_name_src||' '||last_name_src`
+
+<img src="image_dc2103.png" alt="Expression 03 Configuration" width="100%">
+
+* **`exp_4` (New Active Value Branch):** Captures changed records from the `UPSERT` stream and formats them as the new current operational record before passing them to `Target3`.
+  * `current_flag_val` = `'Y'`
+  * `effective_date_value` = `SYSDATE`
+  * `full_name_value` = `first_name_src||' '||last_name_src`
+
+<img src="image_dc2124.png" alt="Expression 4 Configuration" width="100%">
+
+### 4. Downstream Target Operations Mapping
+To avoid custom update scripting scripts, this mapping leverages the explicit UI configuration properties of parallel target elements pointing to the same destination table:
+* **`Target2` (Connected from `exp_02`):** Configured with an **Insert** operation to add new profiles.
+* **`Target` (Connected from `exp_03`):** Configured with an **Update** operation using `employee_id` as the update columns key to close out the expired record.
+* **`Target3` (Connected from `exp_4`):** Configured with an **Insert** operation to append the new active configuration state.
 
 ---
 
 ## Verification & Execution Profiling
 
 ### Scenario Validation Run
-To simulate a real-world corporate reorganization, an employee profile was updated inside the source file, altering their department metadata from `IT` to `Finance`.
+To simulate an organizational shift, an employee profile was updated inside the source system, changing their department association from `IT` to `Finance`.
 
 ```sql
--- Post-ETL Audit Query to Track Historical Change Resolution
+-- Post-ETL Audit Query to Verify Target PostgreSQL Database State
 SELECT 
     employee_id, 
     full_name, 
@@ -118,19 +138,17 @@ ORDER BY effective_date ASC;
 ```
 
 ### Materialized Analytical Output
-The database layout cleanly reflects the historical preservation asset, accurately setting timestamps and structural flags without manual script intervention:
+The target database results show that the pipeline successfully closed out the historical profile row and appended the new current version in parallel without record duplication:
 
 | employee_id | full_name | department | effective_date | end_date | current_flag |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 101 | John Doe | IT | 2026-01-01 | 2026-04-30 | N |
 | 101 | John Doe | Finance | 2026-05-01 | NULL | Y |
 
-<img src="screenshots/05_database_results.png" alt="PostgreSQL Target Verification Data View" width="100%">
-
 ---
 
 ## 🛠️ Production-Hardening Opportunities (Senior Engineering Scope)
-While this visual mapping architecture flawlessly manages standard SCD Type 2 processing criteria, the following design frameworks are accounted for deployment within enterprise scaling operations:
+While this visual mapping architecture cleanly manages standard SCD Type 2 processing criteria, the following design concepts can optimize operations at enterprise scale:
 
-1. **Defusing Variant Null Assertions:** Standard inequality evaluations (`src_col != lkp_col`) can fail or yield unexpected null evaluations if an operational attribute arrives empty from source endpoints. In high-volume production setups, these comparisons are safely wrapped using localized string fallbacks, e.g., `IIF(ISNULL(src_department), '', src_department) != IIF(ISNULL(lkp_department), '', lkp_department)`.
-2. **MD5 Change-Hash Vectors:** For enterprise dimensions containing dozens of trackable attributes, chaining extensive strings of sequential `OR` comparison conditions becomes highly unwieldy and error-prone. A scaling best practice involves generating a single data signature port utilizing `MD5(field1 || field2 || ...)` within both the staging mapping and target warehouse. The pipeline can then evaluate a single, streamlined string comparison link to identify data modifications instantaneously.
+1. **Handling Empty Values (Null Handling):** Standard comparison operations (`src_col != lkp_col`) can experience issues if fields arrive empty from a source file. Wrapping comparison properties with default replacements—such as `IIF(ISNULL(src_department), '', src_department) != IIF(ISNULL(lkp_department), '', lkp_department)`—prevents system errors and ensures reliable data comparison.
+2. **MD5 Change-Hash Techniques:** Chaining dozens of `OR` criteria can become difficult to maintain when managing larger tables with many columns. A cleaner corporate design approach involves generating a single hash key string using an expression pattern like `MD5(field1 || field2 || field3)`. The mapping can then evaluate a single code value comparison to determine if any profile changes have occurred instantly.
