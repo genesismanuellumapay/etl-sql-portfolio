@@ -3,7 +3,7 @@
 ## Business Case
 In real-world enterprise environments, marketing teams frequently capture raw customer data from decentralized web forms, landing pages, and third-party platforms. This raw data is notoriously "dirty"—plagued by inconsistent casing, missing fields, and malformed email syntaxes. 
 
-This project implements an automated cloud data pipeline using **Informatica Intelligent Cloud Services (IICS)** to ingest, clean, validate, and standardize raw customer CSV data before securely provisioning it into a production relational database.
+This project implements a cloud data pipeline using **Informatica Intelligent Cloud Services (IICS)** to ingest, clean, validate, and standardize raw customer CSV data before loading it into a production database.
 
 ## Pipeline Architecture
 <img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
