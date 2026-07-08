@@ -21,7 +21,7 @@ This pipeline utilizes a parallel split-stream target design pattern. It evaluat
 ```
 
 ### Visual Mapping Overview
-<img src="image_0dec04.png" alt="IICS Complete SCD2 Mapping Canvas" width="100%">
+<img src="01_mapping_canvas.png" alt="IICS Complete SCD2 Mapping Canvas" width="100%">
 
 ---
 
@@ -76,15 +76,15 @@ CREATE TABLE dim_employee (
 
 > 💡 **Developer Note:** By utilizing an Advanced Lookup Data Filter, the transformation cache only ingests active target records. This protects the pipeline from the "Multiple-Change Lookup Trap," ensuring arriving data evaluates solely against an employee's *most recent active profile* rather than matching older, expired historical rows.
 
-<img src="image_dc206b.png" alt="Lookup Configuration" width="100%">
-<img src="image_dc208a.png" alt="Lookup Advanced Filter" width="100%">
+<img src="02_lookup_condition.png" alt="Lookup Configuration" width="100%">
+<img src="03_advance_filter_condition.png" alt="Lookup Advanced Filter" width="100%">
 
 ### 2. Stream Routing Engine (`rtr_01`)
 Segregates data paths based on the presence of the business key and potential metadata transformations:
 * **Group `INSERT_NEW` Condition:** `ISNULL(employee_id)`
 * **Group `UPSERT` Condition:** `employee_id = employee_id_src AND (department != department_src OR job_title != job_title_src OR salary != salary_src)`
 
-<img src="image_dc20c1.png" alt="Router Configuration" width="100%">
+<img src="04_router_configuration.png" alt="Router Configuration" width="100%">
 
 ### 3. Parallel Expression Transformation Blocks
 Rather than using generic script commands, structural metadata changes and formatting calculations are cleanly isolated inside independent, parallel expression engines:
@@ -94,21 +94,21 @@ Rather than using generic script commands, structural metadata changes and forma
   * `effective_date_value` = `SYSDATE`
   * `full_name_value` = `first_name_src||' '||last_name_src`
 
-<img src="image_dc20e2.png" alt="Expression 02 Configuration" width="100%">
+<img src="05_exp_02.png" alt="Expression 02 Configuration" width="100%">
 
 * **`exp_03` (Historical Expiration Branch):** Captures changed records from the `UPSERT` stream and updates tracking parameters to close out their active reporting window before passing them to `Target`.
   * `current_flag_val` = `'N'`
   * `end_date_value` = `ADD_TO_DATE(SYSDATE, 'DD', -1)`
   * `full_name_value` = `first_name_src||' '||last_name_src`
 
-<img src="image_dc2103.png" alt="Expression 03 Configuration" width="100%">
+<img src="06_exp_03.png" alt="Expression 03 Configuration" width="100%">
 
 * **`exp_4` (New Active Value Branch):** Captures changed records from the `UPSERT` stream and formats them as the new current operational record before passing them to `Target3`.
   * `current_flag_val` = `'Y'`
   * `effective_date_value` = `SYSDATE`
   * `full_name_value` = `first_name_src||' '||last_name_src`
 
-<img src="image_dc2124.png" alt="Expression 4 Configuration" width="100%">
+<img src="07_exp_04.png" alt="Expression 4 Configuration" width="100%">
 
 ### 4. Downstream Target Operations Mapping
 To avoid custom update scripting scripts, this mapping leverages the explicit UI configuration properties of parallel target elements pointing to the same destination table:
