@@ -1,7 +1,7 @@
 # Project 2: Monthly Customer Sales Analytics Pipeline
 
 ## Business Scenario & Objective
-The business team requires an automated, high-performance monthly customer sales report to track revenue trends, order volumes, and customer buying behavior. 
+The business team requires a production-ready, streamlined monthly customer sales report to track revenue trends, order volumes, and customer buying behavior. 
 
 The objective of this project is to build an end-to-end data integration pipeline in **Informatica Intelligent Cloud Services (IICS)** that consolidates siloed operational data (customer contacts and historical orders) from a transactional PostgreSQL database, executes aggregate business logic, and materializes a consolidated reporting layer.
 
