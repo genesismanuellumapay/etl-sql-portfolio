@@ -89,7 +89,7 @@ VALUES ('orders', 5);
 
 ### 4. Aggregator Transformation (`AGG_get_new_max`)
 * **Purpose:** Calculate the highest `order_id` in the current batch to update the control table.
-* **Output Port:** `out_max_order_id` = `MAX(order_id)`
+* **Output Port:** `max_order_id` = `MAX(order_id)`
 
 <img src="screenshots/04_aggregator_target.png" alt="Aggregator Max Logic" width="100%">
 
