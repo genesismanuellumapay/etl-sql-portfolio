@@ -9,8 +9,8 @@ This project implements an automated cloud data pipeline using **Informatica Int
 <img src="screenshots/main_mapping.png" alt="Main Mapping Canvas" width="100%">
 
 ### Key Design Patterns Used:
-* **Centralized Data Formatting:** Consolidated all text cleaning (INITCAP, UPPER) and date type-casting (TO_DATE) into a single Expression transformation (exp_1). This keeps the mapping clean and efficient by handling all formatting in one place instead of using multiple transformations.
-* **Data Validation Filtering:** Implemented a downstream Filter transformation (fil_1) using the INSTR function to check specific string patterns. This allows the pipeline to instantly identify and drop bad or malformed records before they ever reach the target database.
+* **Centralized Data Formatting:** Consolidated all text cleaning (`INITCAP`, `UPPER`) and date type-casting (`TO_DATE`) into a single Expression transformation (exp_1). This keeps the mapping clean and efficient by handling all formatting in one place instead of using multiple transformations.
+* **Data Validation Filtering:** Implemented a downstream Filter transformation (`fil_1`) using the `INSTR` function to check specific string patterns. This allows the pipeline to instantly identify and drop bad or malformed records before they ever reach the target database.
 
 ---
 
