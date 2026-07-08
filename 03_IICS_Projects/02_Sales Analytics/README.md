@@ -16,7 +16,7 @@ The workflow follows a standard enterprise data integration pattern, joining dat
     [Source: orders]   ───┘
 
 ### Visual Mapping Overview
-<img src="screenshots/01_mapping_canvas.png" alt="IICS Complete Mapping Canvas" width="100%">
+<img src="screenshots/01_main_mapping.png" alt="IICS Complete Mapping Canvas" width="100%">
 
 ---
 
@@ -26,48 +26,6 @@ The workflow follows a standard enterprise data integration pattern, joining dat
 > 
 > **Solution:** They must be derived **BEFORE** the Aggregator transformation. 
 > * **Reasoning:** The Aggregator needs to group transactions by both the individual calendar month and the unique customer name. If we attempted to calculate these fields *after* aggregation, the row-level granular fields (`first_name`, `last_name`, and `order_date`) would already be condensed and lost, causing pipeline compilation failures.
-
----
-
-## Database Setup & Source Data
-
-### 1. Source System Layout
-The contact information is populated from the `au-500` demographic dataset, while customer purchases are tracked in the transactional `orders` table.
-
-```sql
--- Transactional Orders Source Table
-CREATE TABLE orders (
-    order_id     SERIAL PRIMARY KEY,
-    contact_id   INT NOT NULL,
-    order_date   DATE NOT NULL,
-    total_amount NUMERIC(10,2),
-    status       VARCHAR(20),
-    CONSTRAINT fk_orders_contacts FOREIGN KEY (contact_id) REFERENCES contacts (contact_id) ON DELETE CASCADE
-);
-
--- Seed Transactional Data
-INSERT INTO orders (contact_id, order_date, total_amount, status) VALUES
-(1, '2026-01-10', 150.00, 'Completed'),
-(1, '2026-01-15',  85.50, 'Completed'),
-(2, '2026-01-12', 220.00, 'Pending'),
-(2, '2026-01-18',  45.00, 'Cancelled'),
-(3, '2026-01-20', 310.75, 'Completed'),
-(4, '2026-01-22',  99.99, 'Completed'),
-(5, '2026-01-25', 120.00, 'Pending'),
-(6, '2026-01-28',  60.00, 'Completed');
-```
-
-### 2. Analytical Target Layout
-```sql
-CREATE TABLE monthly_customer_sales (
-    month          DATE,
-    contact_id     INT,
-    customer_name  VARCHAR(100),
-    total_orders   INT,
-    total_sales    NUMERIC(10,2),
-    avg_sales      NUMERIC(10,2)
-);
-```
 
 ---
 
