@@ -79,11 +79,11 @@ VALUES ('orders', 5);
 
 ### Execution Scenario
 1. The `etl_control` table indicated the last loaded record was `5`.
-2. Three new records (`6`, `7`, `8`) were inserted into the source system.
+2. Fifteen new records (`6`-`20`) were inserted into the source system.
 3. The pipeline was executed.
 
 ### Database Verification
-Only the 3 new records were successfully written to `incremental_orders`, and the `etl_control` table safely updated its high-water mark to `8`.
+Only the 3 new records were successfully written to `incremental_orders`, and the `etl_control` table safely updated its high-water mark to `20`.
 
 ```sql
 -- 1. Verify only delta records were loaded
