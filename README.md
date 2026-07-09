@@ -2,7 +2,7 @@
 
 ## About Me
 
-I am a Data & Application Systems Engineer with over 3 years of corporate experience specializing in data integration workflows, database administration, and process automation. 
+I am a Data & Application Systems Engineer with over 3 years of experience specializing in data integration workflows, database administration, and process automation. 
 
 This repository serves as a technical showcase of enterprise-grade data engineering patterns built using **Informatica Intelligent Cloud Services (IICS)** and **PostgreSQL**. The pipelines demonstrated here move beyond basic data movement, focusing on complex architectural challenges such as Slowly Changing Dimensions (SCD), High-Water Mark delta extraction, and exception-handling frameworks.
 
